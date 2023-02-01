@@ -1,0 +1,23 @@
+---
+!include configs/base.yaml
+---
+
+# here we extend the base config so the clients use the Adam optimizer (instead of SGD)
+# We also change the strategy from FedAvg to FedAdam (which requires `initial_parameters`)
+
+server:
+  strategy: !bind:flwr.server.strategy.FedAdam
+    fraction_fit: 0.1
+    min_fit_clients: !xref server.clients_per_round
+    min_available_clients: !xref server.pool
+    eta: 0.01
+    eta_l: 0.03
+    initial_parameters: !call:src.model_utils.model_to_parameters
+      model_cfg: !xref model
+
+    on_fit_config_fn: !call:src.server.gen_fit_config
+      fit_cfg: !xref server.fit_cfg
+
+client:
+  optim: !bind:torch.optim.Adam
+      lr: 0.01

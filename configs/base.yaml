@@ -1,0 +1,45 @@
+---
+dataset:
+  name: 'CIFAR10'
+  num_classes: 10
+  lda_alpha: 1.0
+  prepare: !call:src.datasets.get_cifar_10_and_partition
+    config:
+      pool: !xref server.pool
+      alpha: !xref dataset.lda_alpha
+      num_classes: !xref dataset.num_classes
+      val: 0.1
+
+
+model:
+  build: !bind:src.models.Net {} # use {} to indicate the class we're binding to doesn't expect any input arg
+
+server:
+  pool: 100
+  clients_per_round: 10
+  num_rounds: 10
+  fit_cfg:
+    epochs: 5
+    batch_size: 32
+    num_cpu: !xref client.resources.num_cpus
+  strategy: !bind:flwr.server.strategy.FedAvg
+    fraction_fit: 0.1
+    min_fit_clients: !xref server.clients_per_round
+    min_available_clients: !xref server.pool
+    on_fit_config_fn: !call:src.server.gen_fit_config
+      fit_cfg: !xref server.fit_cfg
+
+client:
+  resources:
+    num_cpus: 2
+    num_gpus: 0.0
+  model: !xref model
+  optim: !bind:torch.optim.SGD
+    lr: 0.01
+    momentum: 0.9
+
+
+misc: !force
+  now: !eval "import datetime;datetime.datetime.now().strftime('%b%d_%H_%M_%S')"
+  exp_name: !fstr "{dataset.name}_{server.pool}_lda{dataset.lda_alpha}"
+  exp_dir: !path:parent(1) [experiments, !fstr '{misc.exp_name}', !fstr '{misc.now}']
