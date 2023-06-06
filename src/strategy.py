@@ -1,11 +1,22 @@
 from random import random
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict, Callable
+
+
+from awesomeyaml.config import Config
+
+import torch
+from torch.utils.data import DataLoader
+from torchvision.datasets import CIFAR10
+
+from tqdm import tqdm
 
 from flwr.server.strategy import FedAvg
 from flwr.common.typing import Parameters, FitIns, FitRes
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.client_manager import ClientManager
 from flwr.common import parameters_to_ndarrays
+
+from .datasets import cifar10Transformation
 
 
 class CustomFedAvg(FedAvg):
@@ -17,8 +28,7 @@ class CustomFedAvg(FedAvg):
     and therefore excluding certain updates from being aggregated).
     """
     def __init__(self, num_rounds: int, eval_every_n: int=5,
-                 keep_ratio: float=0.5, drop_ratio: float=0.25,
-                 *args, **kwargs):
+                 keep_ratio: float=0.5, drop_ratio: float=0.25, *args, **kwargs):
 
         self.num_rounds = num_rounds # total rounds
         self.eval_every_n = eval_every_n # global eval freq
@@ -120,3 +130,102 @@ class CustomFedAvg(FedAvg):
 
         # call the parent `aggregate_fit()` (i.e. that in standard FedAvg)
         return super().aggregate_fit(server_round, results, failures)
+
+
+class CustomFedAvgWithKD(FedAvg):
+    """My customised FedAvg Strategy for a simple setup with client-side distillation.
+    The student model is the one federated as usual. The teacher model is first trained
+    upon strategy creation and then sent to the client in each round (see `configure_fit`).
+    The client uses the teacher to train the student locally using KD."""
+    def __init__(self, num_rounds: int, teacher, kd_config, *args, **kwargs):
+
+        self.num_rounds = num_rounds
+        self.teacher_cfg = teacher # we store the callbale that can instantiate the teacher. We'll be sending this to the clients (in addition to the teacher weights)
+        self.teacher = teacher.build() # instantiate teacher
+        self.kd_config = kd_config
+
+        # pre-train the teacher (for the purpose of this example we'll just use a handful of batches
+        # using the training set). This will make the teach inmediately better than the the student
+        # in the early stages of FL trianing (hence serving for our simple KD demo). Please note that
+        # you'd normally will be doing the KD on a disjoint partition of data from that that's federated.
+        # Likely this data would be from a common data distribution, so the KD is aligned.
+        self._unrealistically_but_effectively_pretrain_the_teacher()
+
+        # no need to do anything else, call default behaviour from parent vanilla FedAvg
+        super().__init__(*args, **kwargs)
+
+
+    def _unrealistically_but_effectively_pretrain_the_teacher(self, path_to_data="./data"):
+
+        # Do training as you'd normally do in a centralised setup
+        train_set = CIFAR10(root=path_to_data, train=True, download=True, transform=cifar10Transformation())
+
+        trainloader = DataLoader(train_set, batch_size=self.kd_config.teacher_pretrain.batch_size, num_workers=4)
+        optim = self.kd_config.teacher_pretrain.optim(self.teacher.parameters())
+
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        criterion = torch.nn.CrossEntropyLoss()
+        self.teacher.to(device)
+        self.teacher.train()
+
+        print(f"Pretraining teacher for {self.kd_config.teacher_pretrain.num_batches} batches of size {self.kd_config.teacher_pretrain.batch_size}")
+        with tqdm(total=len(train_set), desc=f'pseudo-pretraining teacher') as t:
+            for i, (images, labels) in enumerate(trainloader):
+                images, labels = images.to(device), labels.to(device)
+                optim.zero_grad()
+                loss = criterion(self.teacher(images), labels)
+                loss.backward()
+                optim.step()
+
+                t.update(images.shape[0])
+
+                if i + 1 == self.kd_config.teacher_pretrain.num_batches:
+                    break
+        print("Teacher is pretrained")
+
+    def _get_teacher_asarray(self):
+        self.teacher.cpu()
+        return [val.numpy() for _, val in self.teacher.state_dict().items()]
+
+    def configure_fit(self, server_round: int, parameters: Parameters,
+                      client_manager: ClientManager):
+        """Configure the next round of training. Standard behaviour as in FedAvg
+        but fit instructions have been extended to include the teacher model and
+        the config that describes how to do KD on the client side. """
+
+        config = {}
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
+
+        # flatten and add teacher model and KD config to config dict
+        # this config will be received by each participating client
+        config['teacher_cfg'] = self.teacher_cfg
+        config['teacher_arrays'] = self._get_teacher_asarray()
+        config['KD_config'] = self.kd_config.student_train
+
+        fit_ins = FitIns(parameters, config)
+
+        # Sample clients
+        sample_size, min_num_clients = self.num_fit_clients(
+            client_manager.num_available()
+        )
+        clients = client_manager.sample(
+            num_clients=sample_size, min_num_clients=min_num_clients
+        )
+
+        # Return client/config pairs
+        return [(client, fit_ins) for client in clients]
+
+    def evaluate(self, server_round: int, parameters: Parameters):
+        """Evaluates global model. Flags if last round in FL training. Recall
+        that `parameters` are the weights of the model being federated (i.e. 
+        the student in this KD example)"""
+        
+        is_last_round = server_round == self.num_rounds
+        parameters_ndarrays = parameters_to_ndarrays(parameters)
+        loss, metrics = self.evaluate_fn(server_round,
+                                            parameters_ndarrays,
+                                            config={},
+                                            is_last_round=is_last_round)
+        return loss, metrics

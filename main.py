@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     def client_fn(cid: str):
         # create a single client instance
-        return FlowerClient(cid, fed_dir, cfg.client)
+        return cfg.client.build(cid, fed_dir)
 
     # (optional) specify Ray config
     ray_init_args = {"include_dashboard": False, "address": "auto" if args.attach else None}

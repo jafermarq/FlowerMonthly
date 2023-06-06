@@ -1,0 +1,43 @@
+---
+!include configs/base.yaml
+---
+
+# here we extend the base config and set the server to use the custom strategy class in `src/strategy`
+# to demonstrate a simplified setup of client-side knowledge distillation. Different from other typical
+# FL examples, here the server communicates two models: (1) a teacher model that's pre-trained and (2) a
+# student network that's learned in a federated fashion by distilling on the client's side.
+
+server:
+  strategy: !bind:src.strategy.CustomFedAvgWithKD
+    # Let's pass first (order doesn't matter) the arguments unique to our custom strategy
+    num_rounds: !xref server.num_rounds
+    teacher:
+      build: !bind:src.models.ResNet18 # let's use a ResNet-18 as our teach (because why not)
+        num_classes: 10
+    kd_config:
+      teacher_pretrain:
+        batch_size: 32
+        optim: !bind:torch.optim.SGD
+          lr: 0.1
+          momentum: 0.9
+        num_batches: 50 # let's limit how many batches of data are use for training the teacher.
+      student_train:
+        temperature: 2
+        alpha: 0.5
+    # We pass the usual arguments needed for a strategy (in this case ours inherites from FedAvg)
+    fraction_fit: 0.0001
+    fraction_evaluate: 0.0
+    min_fit_clients: !xref server.clients_per_round
+    min_available_clients: !xref server.pool
+    on_fit_config_fn: !call:src.server.gen_fit_config
+      fit_cfg: !xref server.fit_cfg
+  
+
+# we also need a custom client config
+client:
+  build: !bind:src.client.FlowerClientWithKD:
+    cfg:
+      model: !xref model
+      optim: !bind:torch.optim.SGD
+        lr: 0.01
+        momentum: 0.9

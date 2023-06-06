@@ -24,7 +24,7 @@ def get_evaluate_fn(
     """Return an evaluation function for centralized evaluation."""
 
     def evaluate(
-        server_round: int, parameters:NDArrays, config: Dict[str, Scalar], is_last_round: bool
+        server_round: int, parameters:NDArrays, config: Dict[str, Scalar], is_last_round: bool=False
     ) -> Optional[Tuple[float, float]]:
         """Use the entire CIFAR-10 test set for evaluation."""
 
