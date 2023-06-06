@@ -1,5 +1,5 @@
 from random import random
-from typing import Union, Tuple, List, Dict, Callable
+from typing import Union, Tuple, List
 
 
 from awesomeyaml.config import Config
@@ -20,11 +20,11 @@ from .datasets import cifar10Transformation
 
 
 class CustomFedAvg(FedAvg):
-    """My customised FedAvg Strategy. It inherites from FedAvg.
+    """My customised FedAvg Strategy. It inherits from FedAvg.
     The ideas implemented here are designed with FL simulation in mind
     and for test research ideas including, but not limited to, understanding
-    how a new strategy would behave in scenarios with unsual client participation
-    patterns (and thefore requiring special sampling); simulating client failure (
+    how a new strategy would behave in scenarios with unusual client participation
+    patterns (and therefore requiring special sampling); simulating client failure (
     and therefore excluding certain updates from being aggregated).
     """
     def __init__(self, num_rounds: int, eval_every_n: int=5,
@@ -33,7 +33,7 @@ class CustomFedAvg(FedAvg):
         self.num_rounds = num_rounds # total rounds
         self.eval_every_n = eval_every_n # global eval freq
         self.keep_ratio = keep_ratio # ratio of clients to resample in the following round
-        self.client_update_drop = drop_ratio # ratio of client updates to discard from aggragation
+        self.client_update_drop = drop_ratio # ratio of client updates to discard from aggregation
         super().__init__(*args, **kwargs)
 
     def evaluate(self, server_round: int, parameters: Parameters):
@@ -59,7 +59,7 @@ class CustomFedAvg(FedAvg):
         """Configure the next round of training. In the first round we sample
         N clients from the M available and track which clients have been sampled.
         In subsequent rounds we sample again 100*keep_ratio % of the previously sampled
-        clients and sample the remeaining (so we have N participants) out of the remaining
+        clients and sample the remaining (so we have N participants) out of the remaining
         ones. This is stochastic (it is likely not the same number of clients will always
         be kept for the next round)"""
 
@@ -73,12 +73,12 @@ class CustomFedAvg(FedAvg):
         # config: a python dictionary that parameterises the client's fit() method
         fit_ins = FitIns(parameters, config)
 
-        # interface with the client manager to get statitics of the available pool of
+        # interface with the client manager to get statistics of the available pool of
         # clients that can be sampled in this given round.
         av_clients = client_manager.num_available()
         sample_size, min_num_clients = self.num_fit_clients(av_clients)
             
-        if server_round == 1: # first round, random unifrom sampling (standard)
+        if server_round == 1: # first round, random uniform sampling (standard)
 
             clients = client_manager.sample(
                 num_clients=sample_size, min_num_clients=min_num_clients)
@@ -99,7 +99,7 @@ class CustomFedAvg(FedAvg):
         # record client proxies
         self.prev_clients = clients
 
-        print(f"Roudn {server_round} sampled clients with cid: {[client.cid for client in self.prev_clients]}")
+        print(f"Round {server_round} sampled clients with cid: {[client.cid for client in self.prev_clients]}")
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
@@ -137,16 +137,15 @@ class CustomFedAvgWithKD(FedAvg):
     The student model is the one federated as usual. The teacher model is first trained
     upon strategy creation and then sent to the client in each round (see `configure_fit`).
     The client uses the teacher to train the student locally using KD."""
-    def __init__(self, num_rounds: int, teacher, kd_config, *args, **kwargs):
+    def __init__(self, teacher, kd_config, *args, **kwargs):
 
-        self.num_rounds = num_rounds
-        self.teacher_cfg = teacher # we store the callbale that can instantiate the teacher. We'll be sending this to the clients (in addition to the teacher weights)
+        self.teacher_cfg = teacher # we store the callable that can instantiate the teacher. We'll be sending this to the clients (in addition to the teacher weights)
         self.teacher = teacher.build() # instantiate teacher
         self.kd_config = kd_config
 
         # pre-train the teacher (for the purpose of this example we'll just use a handful of batches
-        # using the training set). This will make the teach inmediately better than the the student
-        # in the early stages of FL trianing (hence serving for our simple KD demo). Please note that
+        # using the training set). This will make the teach immediately better than the the student
+        # in the early stages of FL training (hence serving for our simple KD demo). Please note that
         # you'd normally will be doing the KD on a disjoint partition of data from that that's federated.
         # Likely this data would be from a common data distribution, so the KD is aligned.
         self._unrealistically_but_effectively_pretrain_the_teacher()
@@ -217,15 +216,27 @@ class CustomFedAvgWithKD(FedAvg):
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
 
-    def evaluate(self, server_round: int, parameters: Parameters):
-        """Evaluates global model. Flags if last round in FL training. Recall
-        that `parameters` are the weights of the model being federated (i.e. 
-        the student in this KD example)"""
-        
-        is_last_round = server_round == self.num_rounds
-        parameters_ndarrays = parameters_to_ndarrays(parameters)
-        loss, metrics = self.evaluate_fn(server_round,
-                                            parameters_ndarrays,
-                                            config={},
-                                            is_last_round=is_last_round)
-        return loss, metrics
+    def aggregate_fit(self, server_round: int,
+                      results: List[Tuple[ClientProxy, FitRes]],
+                      failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]]):
+        """Here we aggregate the results received from the clients and use them
+        to update the global model state. In this example we are receiving the updated
+        student networks (the student is the model being federated while the teacher was
+        pre-trained at the beginning of the experiment and left unchanged ever since). This
+        custom `aggregate_fit` servers the purpose of showing how the metrics returned byt
+        the clients can be easily extracted from the results."""
+
+        # We can iterate over the results received from the clients
+        # and extract the metrics sent.
+        fit_metrics = [(c_prox.cid, res.metrics) for c_prox, res in results]
+        print(fit_metrics) # will print a list of (cid, times) tuples
+
+        # With the metrics you could modify how the aggregation is done (we don't do so
+        # here, instead call the parent aggregation method, i.e., that of the vanilla FedAvg)
+        # You could also save record these metrics and use it to define the next round. As
+        # usual, think twice what info from the client side you are using during prototyping,
+        # since in real world deployments, you wouldn't want to use any of it unless it is
+        # certain that privacy is not compromised.
+
+        # call the parent `aggregate_fit()` (i.e. that in standard FedAvg)
+        return super().aggregate_fit(server_round, results, failures)

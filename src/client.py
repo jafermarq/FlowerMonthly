@@ -1,3 +1,4 @@
+from time import time
 from typing import Dict
 from pathlib import Path
 from collections import OrderedDict
@@ -77,12 +78,12 @@ class FlowerClient(fl.client.NumPyClient):
 
 class FlowerClientWithKD(FlowerClient):
     """A Flower client that behaves as the standard client above for the most part.
-    The main exception being that local training is doine using Knowledge-Distillation
-    using as teacher a model sent from the server. Under this formualation of federated
+    The main exception being that local training is done using Knowledge-Distillation
+    using as teacher a model sent from the server. Under this formulation of federated
     KD, the server sends two models to the clients: a pre-trained teacher and a student.
     The latter is the one being updated/trained by the clients and hence the one being
     aggregated by the strategy in the server. Please note this is a very simple setup
-    for demosntration purposes."""
+    for demonstration purposes."""
 
 
     def _instantiate_teacher(self, teacher: Config, teacher_arrays):
@@ -105,11 +106,10 @@ class FlowerClientWithKD(FlowerClient):
 
         # instantiate teacher with parameters sent from server
         # (We could of course instantiate the teacher in the constructor of this class and only
-        # update it's weights here -- for example if we have a more ellaborated setup where the
+        # update it's weights here -- for example if we have a more elaborated setup where the
         # teacher is also being periodically updated by the server)
         teacher = self._instantiate_teacher(config["teacher_cfg"], config["teacher_arrays"])
         print(f"Client {self.cid} has loaded teacher network successfully!")
-        print(teacher)
 
         # Load data for this client and get trainloader
         trainloader = get_dataloader(
@@ -128,9 +128,19 @@ class FlowerClientWithKD(FlowerClient):
         # is critical if you plan to use a high capacity teacher)
         teacher.to(self.device)
 
+        # track parameters of student network
         optimizer = self.cfg.optim(self.net.parameters())
-        # Train
-        train_with_kd(self.net, teacher, config["KD_config"], trainloader, epochs=config["epochs"], device=self.device, optim=optimizer)
 
-        # Return local model and statistics
-        return self.get_parameters(config), len(trainloader.dataset), {}
+        # Train with distillation, We time it
+        start_t = time()
+        train_with_kd(self.net, teacher, config["KD_config"], trainloader, epochs=config["epochs"], device=self.device, optim=optimizer)
+        # time (in secods) that took to do run `train_with_kd`
+        total_t = time() - start_t
+
+        # Return local model and statistics. You can return whatever you want using the last argument (the "Metrics", as are called in Flower)
+        # Using Metrics is great to track in the sever different info about how the training on the clients is going
+        # or when you are experiment with new setups. Just be mindful that, to stay true the FL spirit, no sensible info
+        # should be sent back to the server. Even in simulation settings, incorporating client-side info that would normally
+        # not be available in real deployments might limit the effectiveness of the method you are investigated when deploying
+        # it out in the wild. 
+        return self.get_parameters(config), len(trainloader.dataset), {"fit_time": total_t}
