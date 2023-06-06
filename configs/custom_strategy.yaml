@@ -1,0 +1,21 @@
+---
+!include configs/base.yaml
+---
+
+# here we extend the base config and set the server to use the custom strategy class in `src/strategy`
+# the rest of the experiment setup remains the same as in `configs/base.yaml`
+
+server:
+  strategy: !bind:src.strategy.CustomFedAvg
+    # Let's pass first (order doesn't matter) the arguments unique to our custom strategy
+    num_rounds: !xref server.num_rounds
+    eval_every_n: 5 # run global evaluation every this many rounds (will always run on the first and last round)
+    keep_ratio: 0.5 # this ratio of clients that participated in round N will be sampled again in round N+1
+    drop_ratio: 0.25 # this ratio of client updates sent back to the server will be droped before doing aggregation
+    # We pass the usual arguments needed for a strategy (in this case ours inherites from FedAvg)
+    fraction_fit: 0.0001
+    fraction_evaluate: 0.0
+    min_fit_clients: !xref server.clients_per_round
+    min_available_clients: !xref server.pool
+    on_fit_config_fn: !call:src.server.gen_fit_config
+      fit_cfg: !xref server.fit_cfg

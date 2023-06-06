@@ -12,7 +12,7 @@ conda create -n flowermonthly python=3.8.13 -y
 source activate flowermonthly
 
 # install pytorch et al (you might want to adjust the command below depending on your platform/OS: https://pytorch.org/get-started/locally/)
-conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia -y
+conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 -c pytorch -c nvidia -y
 
 # install flower and other deps
 pip install -r requirements.txt
