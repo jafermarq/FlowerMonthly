@@ -8,7 +8,7 @@ The FlowerMonthy is a monthly online event organised by the team behind [Flower,
   3. A 15 min hands-on example of cool things people do with Flower
   4. Open discussion and Q&A
 
-This repository contains some of the code examples presented in the Flower's FlowerMonthy series. You can see all past event [in the Flower site](https://flower.dev/conf/flower-monthly/). Jump along on the fascinating FL train! 
+This repository contains some of the code examples presented in the Flower's FlowerMonthy series. You can see all past event [in the Flower site](https://flower.dev/conf/flower-monthly/). Jump on the fascinating FL train! 
 
 > Join our [Slack channel](https://flower.dev/join-slack/) to chat directly to thousands already using Flower and to reach out to members of the Flower Team. Whether you are working on an amazing new feature or you hit a roadblock with your FL setup, [reach us also on GitHub](https://github.com/adap/flower) by submitting a PR or by opening an Issue.
 
