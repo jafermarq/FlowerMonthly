@@ -30,7 +30,7 @@ Currently, this repo provides:
 
 ### Setup
 
-While there are different ways of setting up your PyThon environment, here I'll assume a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installation is reachable from a standard bash/zsh terminal. These are the steps to setup the environment:
+While there are different ways of setting up your Python environment, here I'll assume a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installation is reachable from a standard bash/zsh terminal. These are the steps to setup the environment:
 
 ```bash
 # create environment and activate
