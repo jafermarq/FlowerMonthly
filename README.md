@@ -1,7 +1,7 @@
 # FlowerMonthly
 
 
-The FlowerMonthy is a monthly online event organised by the team behind [Flower, A Friendly Federated Learning Framework](https://flower.dev/) that runs for one hour (typically starting at 0900 SF, 1200 NY, 1700 LON, 1800 MAD, 2130 IST, 0000 北京) and is divide into four blocks of content:
+The FlowerMonthy is a monthly online event organised by the team behind [Flower, A Friendly Federated Learning Framework](https://flower.dev/) that runs for one hour on the first Wednesday of each month (typically starting at 0900 SF, 1200 NY, 1700 LON, 1800 MAD, 2130 IST, 0000 北京) and is divide into four blocks of content:
 
   1. A platform update given by a member of the Flower team
   2. A 30 min presentation by a leading expert in Federated Learning
@@ -22,7 +22,7 @@ To start this repo we have ported the [pytorch_simulation](https://github.com/ad
 
 Currently, this repo provides:
 
-* A `configs/strategy_d.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
+* A `configs/strategy_kd.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
 * A `configs/custom_strategy.yaml` config (based on 7 June 2023 FLowerSummit talk) showcasing how to design a custom Flower strategy with ease.
 * A `configs/resnet18.yaml` config that changes the model being federated as well as the compute/memory resources allocated to each virtual client.
 * A `configs/base.yaml` config with all the elements needed to define a complete FL setup. It uses a very lightweigh model so all systems should be capable of running it (no GPU required).
@@ -30,9 +30,9 @@ Currently, this repo provides:
 
 ### Setup
 
+While there are different ways of setting up your PyThon environment, here I'll assume a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) installation is reachable from a standard bash/zsh terminal. These are the steps to setup the environment:
 
 ```bash
-
 # create environment and activate
 conda create -n flowermonthly python=3.8.13 -y
 source activate flowermonthly
