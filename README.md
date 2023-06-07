@@ -1,9 +1,35 @@
 # FlowerMonthly
 
 
-Here I have ported the [pytorch_simulation](https://github.com/adap/flower/tree/main/examples/simulation_pytorch) Flower example and adapted it so it works with [awesomeyaml](https://github.com/SamsungLabs/awesomeyaml) configs to make things easy and flexible. I have added some small changes to the code provided by that example to make this repo more interesting.
+The FlowerMonthy is a monthly online event organised by the team behind [Flower, A Friendly Federated Learning Framework](https://flower.dev/) that runs for one hour (typically starting at 0900 SF, 1200 NY, 1700 LON, 1800 MAD, 2130 IST, 0000 北京) and is divide into four blocks of content:
+
+  1. A platform update given by a member of the Flower team
+  2. A 30 min presentation by a leading expert in Federated Learning
+  3. A 15 min hands-on example of cool things people do with Flower
+  4. Open discussion and Q&A
+
+This repository contains some of the code examples presented in the Flower's FlowerMonthy series. You can see all past event [in the Flower site](https://flower.dev/conf/flower-monthly/). Jump along on the fascinating FL train! 
+
+> Join our [Slack channel](https://flower.dev/join-slack/) to chat directly to thousands already using Flower and to reach out to members of the Flower Team. Whether you are working on an amazing new feature or you hit a roadblock with your FL setup, [reach us also on GitHub](https://github.com/adap/flower) by submitting a PR or by opening an Issue.
+
+
+# Content of this repo
+
+> This repo will keep getting more examples after each Flower Montly so be sure to come by & pull again.
+
+
+To start this repo we have ported the [pytorch_simulation](https://github.com/adap/flower/tree/main/examples/simulation_pytorch) Flower example and adapted it so it works with [AwesomeYaml](https://github.com/SamsungLabs/awesomeyaml) configs to make the parameterisation of your FL experiments easy and flexible. The same could have been achieved using [Hydra](https://hydra.cc/) or other config systems. I have added some small changes to the code provided by that example to make this repo more interesting, some of which is based on FlowerMonthly demos and talks. The code in this repo is validated using Flower's Virtual Client Engine for Simulation of FL workloads. However, the vast majority of the code here can be directly be used in gRPC-based Flower setups outside simulation.
+
+Currently, this repo provides:
+
+* A `configs/strategy_d.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
+* A `configs/custom_strategy.yaml` config (based on 7 June 2023 FLowerSummit talk) showcasing how to design a custom Flower strategy with ease.
+* A `configs/resnet18.yaml` config that changes the model being federated as well as the compute/memory resources allocated to each virtual client.
+* A `configs/base.yaml` config with all the elements needed to define a complete FL setup. It uses a very lightweigh model so all systems should be capable of running it (no GPU required).
+* Integration with `AwesomeYaml`, so you can customise how your experiment runs directly from the command line.
 
 ### Setup
+
 
 ```bash
 
@@ -19,9 +45,9 @@ pip install -r requirements.txt
 ```
 
 
-## AwesomeYaml
+## AwesomeYaml for beginners
 
-Run the example just as originally designed (no change in parameters):
+This section provides an introductory look into [`AwesomeYaml`](https://github.com/SamsungLabs/awesomeyaml), an amazing tool to build yaml-like configs for Python environments. You can run the example just as originally designed (no change in parameters) like this:
 ```bash
 python main.py configs/base.yaml
 ```
