@@ -15,7 +15,7 @@ This repository contains some of the code examples presented in the Flower's Flo
 
 # Content of this repo
 
-> This repo will keep getting more examples after each Flower Montly so be sure to come by & pull again.
+> This repo will keep getting more examples after each Flower Monthly so be sure to come by & pull again.
 
 
 To start this repo we have ported the [pytorch_simulation](https://github.com/adap/flower/tree/main/examples/simulation_pytorch) Flower example and adapted it so it works with [AwesomeYaml](https://github.com/SamsungLabs/awesomeyaml) configs to make the parameterisation of your FL experiments easy and flexible. The same could have been achieved using [Hydra](https://hydra.cc/) or other config systems. I have added some small changes to the code provided by that example to make this repo more interesting, some of which is based on FlowerMonthly demos and talks. The code in this repo is validated using Flower's Virtual Client Engine for Simulation of FL workloads. However, the vast majority of the code here can be directly be used in gRPC-based Flower setups outside simulation.
@@ -25,7 +25,7 @@ Currently, this repo provides:
 * A `configs/strategy_kd.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
 * A `configs/custom_strategy.yaml` config (based on 7 June 2023 FLowerSummit talk) showcasing how to design a custom Flower strategy with ease.
 * A `configs/resnet18.yaml` config that changes the model being federated as well as the compute/memory resources allocated to each virtual client.
-* A `configs/base.yaml` config with all the elements needed to define a complete FL setup. It uses a very lightweigh model so all systems should be capable of running it (no GPU required).
+* A `configs/base.yaml` config with all the elements needed to define a complete FL setup. It uses a very lightweight model so all systems should be capable of running it (no GPU required).
 * Integration with `AwesomeYaml`, so you can customise how your experiment runs directly from the command line.
 
 ### Setup
