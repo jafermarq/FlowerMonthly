@@ -20,6 +20,8 @@ This repository contains some of the code examples presented in the Flower's Flo
 
 To start this repo we have ported the [pytorch_simulation](https://github.com/adap/flower/tree/main/examples/simulation_pytorch) Flower example and adapted it so it works with [AwesomeYaml](https://github.com/SamsungLabs/awesomeyaml) configs to make the parameterisation of your FL experiments easy and flexible. The same could have been achieved using [Hydra](https://hydra.cc/) or other config systems. I have added some small changes to the code provided by that example to make this repo more interesting, some of which is based on FlowerMonthly demos and talks. The code in this repo is validated using Flower's Virtual Client Engine for Simulation of FL workloads. However, the vast majority of the code here can be directly be used in gRPC-based Flower setups outside simulation.
 
+The purpose of this repo is to showcase through simple examples different functionalies of [Flower](https://github.com/adap/flower) (**give it a :star: if you use it**) so you can later use it in your projects. With this in mind, the dataset considered here considered, its partitioning and the training protocol as a whole is kept fairly simple. Here I use CIFAR-10 and split it following [LDA](https://arxiv.org/abs/1909.06335) for a fixed value of \alpha (which you can tune in the configs). By default I generate a 100-client split and sample 10 clients per round (this is a simple but very typical _cross-silo_ FL setup)
+
 Currently, this repo provides:
 
 * A `configs/strategy_kd.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
