@@ -1,9 +1,6 @@
 from random import random
 from typing import Union, Tuple, List
 
-
-from awesomeyaml.config import Config
-
 import torch
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
