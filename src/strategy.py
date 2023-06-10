@@ -1,6 +1,8 @@
 from random import random
 from typing import Union, Tuple, List
 
+from hydra.utils import call, instantiate
+
 import torch
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
@@ -137,7 +139,7 @@ class CustomFedAvgWithKD(FedAvg):
     def __init__(self, teacher, kd_config, *args, **kwargs):
 
         self.teacher_cfg = teacher # we store the callable that can instantiate the teacher. We'll be sending this to the clients (in addition to the teacher weights)
-        self.teacher = teacher.build() # instantiate teacher
+        self.teacher = instantiate(teacher) # instantiate teacher
         self.kd_config = kd_config
 
         # pre-train the teacher (for the purpose of this example we'll just use a handful of batches
@@ -157,7 +159,8 @@ class CustomFedAvgWithKD(FedAvg):
         train_set = CIFAR10(root=path_to_data, train=True, download=True, transform=cifar10Transformation())
 
         trainloader = DataLoader(train_set, batch_size=self.kd_config.teacher_pretrain.batch_size, num_workers=4)
-        optim = self.kd_config.teacher_pretrain.optim(self.teacher.parameters())
+        # instantiate optimiser as defined in the config and passing the teacher parameters
+        optim = instantiate(self.kd_config.teacher_pretrain.optim, params=self.teacher.parameters())
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         criterion = torch.nn.CrossEntropyLoss()
@@ -192,7 +195,7 @@ class CustomFedAvgWithKD(FedAvg):
         config = {}
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
-            config = self.on_fit_config_fn(server_round)
+            config = call(self.on_fit_config_fn)(server_round)
 
         # flatten and add teacher model and KD config to config dict
         # this config will be received by each participating client

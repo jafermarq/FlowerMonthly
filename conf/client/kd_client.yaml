@@ -1,0 +1,14 @@
+# A client that's ready for doing local Knowledge Distillation using a teacher
+# sent by the server. The student is the model being federated.
+
+resources:
+    num_cpus: 4
+    num_gpus: 0.5
+object:
+  _target_: src.client.FlowerClientWithKD
+  cfg:
+    model: ${model}
+    optim:
+      _target_: torch.optim.SGD
+      lr: 0.01
+      momentum: 0.9

@@ -24,11 +24,12 @@ The purpose of this repo is to showcase through simple examples different functi
 
 Currently, this repo provides:
 
-* A `configs/strategy_kd.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
-* A `configs/custom_strategy.yaml` config (based on 7 June 2023 FLowerSummit talk) showcasing how to design a custom Flower strategy with ease.
-* A `configs/resnet18.yaml` config that changes the model being federated as well as the compute/memory resources allocated to each virtual client.
-* A `configs/base.yaml` config with all the elements needed to define a complete FL setup. It uses a very lightweight model so all systems should be capable of running it (no GPU required).
-* Integration with `AwesomeYaml`, so you can customise how your experiment runs directly from the command line.
+* A `conf/strategy/strategy_kd.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
+* A `conf/strategy/custom_strategy.yaml` config (based on 7 June 2023 FLowerSummit talk) showcasing how to design a custom Flower strategy with ease.
+* A `conf/base_kd.yaml` a top-level config that you can run to see a simple federated KD setting in action.
+* A `conf/base_v2.yaml` a top-levelconfig that makes the setup in `base.yaml` a bit more interesting: using ResNet18, clients using GPU and a custom strategy.
+* A `conf/base.yaml` a top-level config with all the elements needed to define a complete FL setup. It uses a very lightweight model so all systems should be capable of running it (no GPU required).
+* Integration with `Hydra`, so you can customise how your experiment runs directly from the command line.
 
 ## Setup
 
@@ -87,4 +88,10 @@ The above config can be found in `conf/base_v2.yaml`, and you can execute as fol
 
 ```bash
 python main.py --config-name=base_v2 # this essentially overrides the config hardcoded in the @hydra decorator in the main.py
+
+# you can use this to run the KD example
+python main.py --config-name=base_kd
+
+# and if you still want to override some of the settings you can totally do so as shown earlier in the readme
+python main.py --config-name=base_kd strategy.kd_config.student_train.temperature=5 # will change the temperature used in FlowerClientWithKD's fit() method
 ```

@@ -2,9 +2,9 @@
 # this defines a top-level config (just like base.yaml) does but with changes to the `defaults` and the FL setup parameterised in `server:`
 
 defaults: # i.e. configs used if you simply run the code as `python main.py`
-  - client: gpu_client # this points to the file: client/gpu_client.yaml
-  - model: resnet18 # this points to the file: model/resnet18.yaml
-  - strategy: custom_strategy # points to strategy/custom_strategy.yaml
+  - client: kd_client # this points to the file: client/kd_client.yaml
+  - model: simple_net # this points to the file: model/simple_net.yaml
+  - strategy: strategy_kd # points to strategy/strategy_kd.yaml
 
 dataset:
   name: 'CIFAR10'

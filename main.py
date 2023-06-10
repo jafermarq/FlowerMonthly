@@ -20,7 +20,10 @@ def run(cfg : DictConfig):
     # to define in the config maybe becasue they are defined at runtime). You need to
     # use keyword arguments.
     # in this case, the function to evaluate the global model requires passing the testset object
-    strategy = instantiate(cfg.strategy, evaluate_fn=get_evaluate_fn(testset, cfg.model))
+    # Our strategy config might contain other nodes with _target_. Often, we want to delya when these
+    # are instantiated until, for instance, all variables needed to do so are ready. We set _recursive_=False
+    # to leave those nodes un-initialised.
+    strategy = instantiate(cfg.strategy, evaluate_fn=get_evaluate_fn(testset, cfg.model), _recursive_=False)
     
     def client_fn(cid: str):
         # Create a single client instance

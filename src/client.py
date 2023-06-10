@@ -89,7 +89,7 @@ class FlowerClientWithKD(FlowerClient):
 
 
     def _instantiate_teacher(self, teacher: DictConfig, teacher_arrays):
-        teacher_model = teacher.build() # instantiate
+        teacher_model = instantiate(teacher) # instantiate
         
         # copy params sent by server
         params_dict = zip(teacher_model.state_dict().keys(), teacher_arrays)
