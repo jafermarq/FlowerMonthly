@@ -3,6 +3,7 @@ resources:
     num_gpus: 0.5
 object:
   _target_: src.client.FlowerClient
+  cfg:
     model: ${model}
     optim:
       _target_: torch.optim.SGD

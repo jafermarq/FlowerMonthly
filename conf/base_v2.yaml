@@ -1,0 +1,32 @@
+
+# this defines a top-level config (just like base.yaml) does but with changes to the `defaults` and the FL setup parameterised in `server:`
+
+defaults: # i.e. configs used if you simply run the code as `python main.py`
+  - client: gpu_client # this points to the file: client/cpu_client.yaml
+  - model: resnet18 # this points to the file: model/resnet18.yaml
+  - strategy: custom_strategy # points to strategy/custom_strategy.yaml
+
+dataset:
+  name: 'CIFAR10'
+  num_classes: 10
+  lda_alpha: 1.0
+  prepare:
+    _target_: src.datasets.get_cifar_10_and_partition # we define as target a function to execute (in the code we'll use `hydra.utils.call(<this_node>)` to execute it)
+    config:
+      pool: ${server.pool} # use ${} syntaxt to access other nodes (and their properties) throught the config (even if they are defined in other .yaml files -- as long as they are part of the run, i.e., parsed by Hydra)
+      # alpha and num_classes are defined inmediately below the `dataset` just so it's easier to modify them from the CLI and to reference them from other parts in the config
+      alpha: ${dataset.lda_alpha} # needed to know how to do LDA partitioning
+      num_classes: ${dataset.num_classes} # needed to know how many partitions to create
+      val: 0.1
+  
+server:
+  pool: 500
+  clients_per_round: 20
+  num_rounds: 10
+  fit_cfg: # config for each client's fit() method (this will be passed the strategy)
+    epochs: 1
+    batch_size: 32
+    num_cpu: ${client.resources.num_cpus} # for dataloader's num_workers
+
+misc:
+  attach: false # set to true if you want Flower's Virtual Client Engine (VCE) to attach to an already running Ray server
