@@ -3,13 +3,15 @@ from typing import Dict, Callable, Optional, Tuple
 
 
 import torch
+from omegaconf import DictConfig
+from hydra.utils import instantiate
 from flwr.common.typing import Scalar, NDArrays
-from awesomeyaml.config import Config
+
 
 from src.model_utils import  test, ndarrays_to_model
 
 
-def gen_fit_config(fit_cfg: Config):
+def gen_fit_config(fit_cfg: DictConfig):
     def fit_config(server_round: int) -> Dict[str, Scalar]:
         """Return a configuration with static batch size and (local) epochs."""
         return fit_cfg
@@ -19,7 +21,7 @@ def gen_fit_config(fit_cfg: Config):
 
 def get_evaluate_fn(
     testset,
-    model_cfg: Config,
+    model_cfg: DictConfig,
 ) -> Callable[[NDArrays], Optional[Tuple[float, float]]]:
     """Return an evaluation function for centralized evaluation."""
 
@@ -32,7 +34,7 @@ def get_evaluate_fn(
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # Let's first instantiate the model
-        model = model_cfg.build()
+        model = instantiate(model_cfg)
         # Now set the model buffers with the parameters of the global model
         ndarrays_to_model(model, parameters)
         model.to(device)

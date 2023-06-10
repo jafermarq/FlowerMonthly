@@ -1,0 +1,11 @@
+resources:
+    num_cpus: 2
+    num_gpus: 0.0
+object:
+  _target_: src.client.FlowerClient
+  cfg:
+    model: ${model}
+    optim:
+      _target_: torch.optim.SGD
+      lr: 0.01
+      momentum: 0.9

@@ -1,0 +1,4 @@
+# will instantiate a ResNet18 as the model to federate.
+# ! You probably want to use the gpu_client with this model
+_target_: src.models.ResNet18
+num_classes: ${dataset.num_classes} # relative definition to what's in dataset.num_classes

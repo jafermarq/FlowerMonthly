@@ -5,8 +5,8 @@ from collections import OrderedDict
 
 import torch
 import numpy as np
-from awesomeyaml.config import Config
-
+from hydra.utils import instantiate
+from omegaconf import DictConfig
 
 import flwr as fl
 from flwr.common.typing import Scalar
@@ -17,15 +17,17 @@ from .model_utils import train, train_with_kd, test, model_as_ndarrays, ndarrays
 class FlowerClient(fl.client.NumPyClient):
     """A very standard Flower client customisable via AwesomeYAML configs.
     Simple but covers 95%+ of what you'd want to do in FL."""
-    def __init__(self, cid: str, fed_dir_data: str, cfg: Config):
+    def __init__(self, cid: str, fed_dir_data: str, cfg: DictConfig):
         self.cid = cid
         self.fed_dir = Path(fed_dir_data)
         self.properties: Dict[str, Scalar] = {"tensor_type": "numpy.ndarray"}
 
         self.cfg = cfg
 
-        # Instantiate model
-        self.net = self.cfg.model.build()
+        # Instantiate model (because the client class might have also been instantiated via Hydra, you want to make sure that
+        # the client was instantiated with _recursive_=False. Else the below will fail. Even worse! all clients will be pointing
+        # to the same object so it will definetively create problems -- which can be solved via copy.deepcopy() but why doing it that way?)
+        self.net = instantiate(self.cfg.model)
 
         # Determine device
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -51,7 +53,7 @@ class FlowerClient(fl.client.NumPyClient):
         # Send model to device
         self.net.to(self.device)
 
-        optimizer = self.cfg.optim(self.net.parameters())
+        optimizer = instantiate(self.cfg.optim, params=self.net.parameters())
         # Train
         train(self.net, trainloader, epochs=config["epochs"], device=self.device, optim=optimizer)
 
@@ -86,7 +88,7 @@ class FlowerClientWithKD(FlowerClient):
     for demonstration purposes."""
 
 
-    def _instantiate_teacher(self, teacher: Config, teacher_arrays):
+    def _instantiate_teacher(self, teacher: DictConfig, teacher_arrays):
         teacher_model = teacher.build() # instantiate
         
         # copy params sent by server
@@ -129,7 +131,7 @@ class FlowerClientWithKD(FlowerClient):
         teacher.to(self.device)
 
         # track parameters of student network
-        optimizer = self.cfg.optim(self.net.parameters())
+        optimizer = instantiate(self.cfg.optim, params=self.net.parameters())
 
         # Train with distillation, We time it
         start_t = time()
