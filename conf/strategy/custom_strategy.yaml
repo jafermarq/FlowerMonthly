@@ -1,6 +1,7 @@
 # A strategy that inherites from FedAvg but adds extra functionality
 
 _target_: src.strategy.CustomFedAvg
+_recursive_: true # we want everything to be instantiated
 # Let's pass first (order doesn't matter) the arguments unique to our custom strategy
 num_rounds: ${server.num_rounds}
 eval_every_n: 5 # run global evaluation every this many rounds (will always run on the first and last round)

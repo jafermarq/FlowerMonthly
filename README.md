@@ -20,10 +20,11 @@ This repository contains some of the code examples presented in the Flower's Flo
 
 To start this repo we have ported the [pytorch_simulation](https://github.com/adap/flower/tree/main/examples/simulation_pytorch) Flower example and adapted it so it works with [Hydra](https://hydra.cc/) configs to make the parameterisation of your FL experiments easy and flexible. The same could have been achieved using [AwesomeYaml](https://github.com/SamsungLabs/awesomeyaml) or other config systems. In fact, a previous version of this repo was entirely designed around AwesomeYaml (see tag `withAwesomeYaml` tag). I have added some small changes to the code provided by that example to make this repo more interesting, some of which is based on FlowerMonthly demos and talks. The code in this repo is validated using Flower's Virtual Client Engine for Simulation of FL workloads. However, the vast majority of the code here can be directly be used in gRPC-based Flower setups outside simulation.
 
-The purpose of this repo is to showcase through simple examples different functionalies of [Flower](https://github.com/adap/flower) (**give it a :star: if you use it**) so you can later use it in your projects. With this in mind, the dataset considered here considered, its partitioning and the training protocol as a whole is kept fairly simple. Here I use CIFAR-10 and split it following [LDA](https://arxiv.org/abs/1909.06335) for a fixed value of \alpha (which you can tune in the configs). By default I generate a 100-client split and sample 10 clients per round (this is a simple but very typical _cross-silo_ FL setup)
+The purpose of this repo is to showcase through simple examples different functionalies of [Flower](https://github.com/adap/flower) (**give it a :star: if you use it**) so you can later use it in your projects. With this in mind, the dataset considered here considered, its partitioning and the training protocol as a whole is kept fairly simple. Here I use CIFAR-10 and split it following [LDA](https://arxiv.org/abs/1909.06335) for a fixed value of \alpha (which you can tune in the configs). By default I generate a 100-client split and sample 10 clients per round (this is a simple but very typical _cross-silo_ FL setup). Please note in this repo I have set sensible values for the hyperparameters but they likely need to be adjusted for each different experiment in this repo.
 
 Currently, this repo provides:
 
+* A `conf/strategy/strategy_model_saving.yaml` config showing how with small changes to a standard Flower strategy you can keep track of all variables you want (e.g. global model state) so you can either genereate checkpoints or retreive their values at the end of simulation.
 * A `conf/strategy/strategy_kd.yaml` config (based on 7 June 2023 FLowerSummit talk) showing how to do a simple form of federated Knowledge-distillation.
 * A `conf/strategy/custom_strategy.yaml` config (based on 7 June 2023 FLowerSummit talk) showcasing how to design a custom Flower strategy with ease.
 * A `conf/base_kd.yaml` a top-level config that you can run to see a simple federated KD setting in action.
@@ -84,14 +85,33 @@ defaults: # i.e. configs used if you simply run the code as `python main.py`
 [...] # rest of the necessary elements: dataset, server, misc
 ```
 
-The above config can be found in `conf/base_v2.yaml`, and you can execute as follows:
+The above config can be found in `conf/base_v2.yaml`.
+
+## Different Experiments in this repo
+
+This repo contains a collection of experiments, all parameterised via the Hydra config structure inside `conf/`. The current list of experiments are:
 
 ```bash
-python main.py --config-name=base_v2 # this essentially overrides the config hardcoded in the @hydra decorator in the main.py
+# runs the default experiment using standard FedAvg
+python main.py
 
-# you can use this to run the KD example
+# you can change the default strategy to point to another one.
+# This example points to that in config `conf/strategy/strategy_model_saving.yaml`
+# it essentially shows how you can keep track of elements in your experiment
+# and retrieve (e.g. for saving them to disk) once simulation is completed
+python main.py strategy=strategy_model_saving
+
+# Overrides the config hardcoded in the @hydra decorator in the main.py to point to `conf/base_v2`
+# this experiments uses the CustomFedAvg and shows how you can change the behaviour of how
+# clients are sampled, udpates are aggregated, and the frequency at which the global model is evaluated
+python main.py --config-name=base_v2
+
+# Run the `conf/base_kd.yaml` config to test a simple federated distillation setting
+# where the teacher is first pre-trained in the server and send to the clients along with
+# the smaller student network (i.e. the one that's being trained in a federated manner)
 python main.py --config-name=base_kd
 
 # and if you still want to override some of the settings you can totally do so as shown earlier in the readme
-python main.py --config-name=base_kd strategy.kd_config.student_train.temperature=5 # will change the temperature used in FlowerClientWithKD's fit() method
+# will change the temperature used in FlowerClientWithKD's fit() method
+python main.py --config-name=base_kd strategy.kd_config.student_train.temperature=5 
 ```

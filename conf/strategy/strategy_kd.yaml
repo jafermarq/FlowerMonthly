@@ -4,6 +4,7 @@
 
 # Let's pass first (order doesn't matter) the arguments unique to our custom strategy
 _target_: src.strategy.CustomFedAvgWithKD
+_recursive_: false # we dont' want the whole thing to be isntantiated (e.g. child nodes with _target_)
 teacher:
   _target_: src.models.ResNet18 # let's use a ResNet-18 as our teach (because why not)
   num_classes: 10

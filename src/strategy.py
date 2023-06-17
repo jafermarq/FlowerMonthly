@@ -1,7 +1,9 @@
 from random import random
-from typing import Union, Tuple, List
+from copy import deepcopy
+from typing import Dict, Optional, Union, Tuple, List
 
 from hydra.utils import call, instantiate
+from hydra.core.hydra_config import HydraConfig
 
 import torch
 from torch.utils.data import DataLoader
@@ -13,7 +15,7 @@ from flwr.server.strategy import FedAvg
 from flwr.common.typing import Parameters, FitIns, FitRes
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.client_manager import ClientManager
-from flwr.common import parameters_to_ndarrays
+from flwr.common import Parameters, Scalar, parameters_to_ndarrays
 
 from .datasets import cifar10Transformation
 
@@ -240,3 +242,40 @@ class CustomFedAvgWithKD(FedAvg):
 
         # call the parent `aggregate_fit()` (i.e. that in standard FedAvg)
         return super().aggregate_fit(server_round, results, failures)
+
+
+class CustomFedAvgWithModelSaving(FedAvg):
+    """This is a custom strategy that behaves exactly like FedAvg
+    with the difference of keeping track of the state of the global
+    model. In this way, the strategy can save the model to disk
+    after each evaluation. It also enables retrieving the model
+    once `start_simulation` is completed.
+    """
+    def __init__(self, *args, **kwargs):
+        self.global_parameters = None
+        super().__init__(*args, **kwargs)
+
+    def _save_global_model(self, server_round: int, params):
+
+        # output directory created by hydra for the current experiments
+        save_path = HydraConfig.get().runtime.output_dir
+        # TODO: save parameters, for instance as a pickle
+        print(f"(NOT IMPLEMENTED) Saved global model in round {server_round} into: {save_path}")
+
+    def evaluate(self, server_round: int, parameters: Parameters) -> Tuple[float, Dict[str, Scalar]]:
+        loss, metrics = super().evaluate(server_round, parameters)
+
+        # Here you could save your model parameters
+        # you could for instance also pass information about the loss or other
+        # metrics you obotained from the evaluate() stage complete in the line above
+        params = parameters_to_ndarrays(parameters) # you likely want to convert them first to a list of NumPy arrays
+        self._save_global_model(server_round, params)
+
+        # additionally, we can update the parameters being tracked as a
+        # class variable for this strategy. This will make it fairly
+        # straightforward to retrieve the model parameters once the 
+        # simulation is completed.
+        self.global_parameters = deepcopy(params)
+
+        # return the outputs from evaluate()
+        return loss, metrics

@@ -1,6 +1,9 @@
-# A faily standard FedAvg strategy for FLower
+# A faily standard FedAvg strategy for FLower with the additional functionality being
+# that the strategy keeps track of the global model state and saves to disk after each
+# evaluation. This allows to retrieve the global model parameters easily after the
+# simulation is completed.
 
-_target_: flwr.server.strategy.FedAvg # we point to a class (in the code we will use `hydra.utils.instantiate(<this_node>)` to create the object)
+_target_: src.strategy.CustomFedAvgWithModelSaving
 _recursive_: true # we want everything to be instantiated
 fraction_fit: 0.0001 # by setting this to a very low number, we can easily control how many clients participate in simulation with a single scalar (i.e. server.clients_per_round) -- see logic here for details: https://github.com/adap/flower/blob/1b4b659204c406bb4fd7821d39a689105543ecbe/src/py/flwr/server/strategy/fedavg.py#L143
 fraction_evaluate: 0.0 # no clients will be sampled for federated evaluation (we will still perform global evaluation)
