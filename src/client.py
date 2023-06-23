@@ -15,7 +15,7 @@ from .datasets import get_dataloader
 from .model_utils import train, train_with_kd, test, model_as_ndarrays, ndarrays_to_model
 
 class FlowerClient(fl.client.NumPyClient):
-    """A very standard Flower client customisable via AwesomeYAML configs.
+    """A very standard Flower client customisable via Hydra configs.
     Simple but covers 95%+ of what you'd want to do in FL."""
     def __init__(self, cid: str, fed_dir_data: str, cfg: DictConfig):
         self.cid = cid

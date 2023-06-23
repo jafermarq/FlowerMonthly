@@ -10,7 +10,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import VisionDataset
 
-from awesomeyaml.config import Config
+from omegaconf import DictConfig
 
 from .common import create_lda_partitions
 
@@ -184,7 +184,7 @@ def get_cifar_10(path_to_data="./data"):
     return training_data, test_set
 
 
-def get_cifar_10_and_partition(config: Config, path_to_data: str='./data'):
+def get_cifar_10_and_partition(config: DictConfig, path_to_data: str='./data'):
     
     train_path, testset = get_cifar_10(path_to_data=path_to_data)
 

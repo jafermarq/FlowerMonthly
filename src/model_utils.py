@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from awesomeyaml.config import Config
 from flwr.common import ndarrays_to_parameters
 
 def model_as_ndarrays(model: torch.nn.ModuleList) -> List[np.ndarray]:
@@ -18,11 +17,6 @@ def ndarrays_to_model(model: torch.nn.ModuleList, params: List[np.ndarray]):
     params_dict = zip(model.state_dict().keys(), params)
     state_dict = OrderedDict({k: torch.from_numpy(np.copy(v)) for k, v in params_dict})
     model.load_state_dict(state_dict, strict=True)
-
-
-def model_to_parameters(model_cfg: Config):
-    model = model_cfg.build()
-    return ndarrays_to_parameters(model_as_ndarrays(model))
 
 
 # borrowed from Pytorch quickstart example
