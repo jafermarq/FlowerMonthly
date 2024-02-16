@@ -43,7 +43,7 @@ def run(cfg : DictConfig):
         # extra arguemtns that weren't available when when the config is parsed. Also, let's not instantiate
         # every object inside the client config (use `_recursive_`=False). This will give us full control on
         # when instantiation happens.
-        return instantiate(cfg.client.object, cid=cid, fed_dir_data=fed_dir, _recursive_=False)
+        return instantiate(cfg.client.object, cid=cid, fed_dir_data=fed_dir, _recursive_=False).to_client()
     
     # (optional) specify Ray config
     # If you want to do multi-node simulations you want the VCE to attach to an existing Ray server

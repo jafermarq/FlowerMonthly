@@ -39,11 +39,11 @@ While there are different ways of setting up your Python environment, here I'll 
 
 ```bash
 # create environment and activate
-conda create -n flowermonthly python=3.8.13 -y
+conda create -n flowermonthly python=3.10 -y
 source activate flowermonthly
 
 # install pytorch et al (you might want to adjust the command below depending on your platform/OS: https://pytorch.org/get-started/locally/)
-conda install pytorch==1.13.1 torchvision==0.14.1 torchaudio==0.13.1 pytorch-cuda=11.6 -c pytorch -c nvidia -y
+conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=12.1 -c pytorch -c nvidia
 
 # install flower and other deps
 pip install -r requirements.txt
@@ -65,7 +65,7 @@ python main.py dataset.lda_alpha=1000 # will use LDA alpha=1000 (making it IID) 
 python main.py client.resources.num_cpus=4 # allocates 4 CPUs to each client (instead of the default 2 as defined in conf/client/cpu_client.yaml -- cpu_client is the default client to use as defined in conf/base.yaml->default.client)
 ```
 
-In some settings you might want to make more substantial changes to the default config. For that, even though you could probably still doing from the command line, it can get messy... Instead, you can directly replace entire structures in your config with others. For example, let's say you want to change your entire client definition from the default one (check it in `conf/client/cpu_client.yaml`). You'll need to create a new yaml file, respecting the expected structure and place it at the same directory as `cpu_client.yaml`. This is exactly what I did with `gpu_client.yaml`. You can use the latter client as follows:
+In some settings, you might want to make more substantial changes to the default config. For that, even though you could probably still doing from the command line, it can get messy... Instead, you can directly replace entire structures in your config with others. For example, let's say you want to change your entire client definition from the default one (check it in `conf/client/cpu_client.yaml`). You'll need to create a new yaml file, respecting the expected structure and place it in the same directory as `cpu_client.yaml`. This is exactly what I did with `gpu_client.yaml`. You can use the latter client as follows:
 ```bash
 python main.py # will use the default `cpu_client.yaml`
 
@@ -106,6 +106,8 @@ python main.py strategy=strategy_model_saving
 # this experiments uses the CustomFedAvg and shows how you can change the behaviour of how
 # clients are sampled, udpates are aggregated, and the frequency at which the global model is evaluated
 python main.py --config-name=base_v2
+# If you'd like to run it with the cpu_client instead
+python main.py --config-name=base_v2 client=cpu_client
 
 # Run the `conf/base_kd.yaml` config to test a simple federated distillation setting
 # where the teacher is first pre-trained in the server and send to the clients along with
